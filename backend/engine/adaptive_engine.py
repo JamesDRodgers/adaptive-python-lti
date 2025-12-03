@@ -149,10 +149,13 @@ def next_question(session: SessionState) -> Optional[Dict]:
     Returns:
         Question dictionary or None if assessment is finished
     """
-    # Check if assessment is complete
-    if session.question_number > session.max_questions:
-        session.finished = True
-        return None
+if session.question_number > session.max_questions:
+    session.finished = True
+    return None
+    
+# Also check AFTER selecting question
+if session.question_number >= session.max_questions:
+    session.finished = True
     
     try:
         # Select question based on current session state
