@@ -53,7 +53,7 @@ adaptive-python-lti/
 
 1. **Clone the repository**
 ```bash
-git clone https://github.com/YOUR-USERNAME/adaptive-python-lti.git
+git clone https://github.com/JamesDRodgers/adaptive-python-lti.git
 cd adaptive-python-lti
 ```
 

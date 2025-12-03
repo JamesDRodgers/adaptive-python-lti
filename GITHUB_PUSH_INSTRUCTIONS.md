@@ -19,8 +19,8 @@ Your repository is ready! Here's how to push it to GitHub.
 After creating the repo, GitHub will show you commands. Use these:
 
 ```bash
-# Add the remote (replace YOUR-USERNAME with your GitHub username)
-git remote add origin https://github.com/YOUR-USERNAME/adaptive-python-lti.git
+# Add the remote
+git remote add origin https://github.com/JamesDRodgers/adaptive-python-lti.git
 
 # Verify remote was added
 git remote -v
@@ -50,7 +50,7 @@ cat ~/.ssh/id_ed25519.pub
 # Go to GitHub → Settings → SSH and GPG keys → New SSH key
 
 # Change remote to SSH
-git remote set-url origin git@github.com:YOUR-USERNAME/adaptive-python-lti.git
+git remote set-url origin git@github.com:JamesDRodgers/adaptive-python-lti.git
 
 # Push
 git push -u origin main
