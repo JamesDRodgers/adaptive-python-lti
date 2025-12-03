@@ -21,7 +21,7 @@ app = FastAPI(title="Adaptive Python Assessment API with LTI")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
-        "https://yourusername.github.io",
+        "https://JamesDRodgers.github.io",
         "http://localhost:8080",
         "https://*.instructure.com",  # Canvas domains
     ],
