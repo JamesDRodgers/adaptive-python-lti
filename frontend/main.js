@@ -1,4 +1,4 @@
-const API = "http://localhost:8000";
+const API = "https://adaptive-python-lti.onrender.com";
 let sessionId = null;
 
 // Start assessment on page load
