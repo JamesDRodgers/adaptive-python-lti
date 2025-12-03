@@ -29,7 +29,7 @@ except FileNotFoundError:
     QUESTIONS = [
         {
             "id": 1,
-            "bloom": 1,
+            "bloom": "Remember",
             "difficulty": 1,
             "question": "What is a variable in Python?",
             "answer": "A variable is a named container that stores a value in memory",
@@ -37,7 +37,7 @@ except FileNotFoundError:
         },
         {
             "id": 2,
-            "bloom": 1,
+            "bloom": "Remember",
             "difficulty": 2,
             "question": "What data type does the input() function return?",
             "answer": "string (str)",
@@ -47,14 +47,14 @@ except FileNotFoundError:
     print(f"Using {len(QUESTIONS)} fallback questions")
 
 
-def select_question(bloom: int, difficulty: int, last_misconception: Optional[str], 
+def select_question(bloom: str, difficulty: int, last_misconception: Optional[str], 
                     asked_question_ids: set) -> Optional[Dict]:
     """
     Select an appropriate question based on Bloom level, difficulty, and misconceptions.
     Avoids asking the same question twice.
     
     Args:
-        bloom: Bloom's taxonomy level (1-5)
+        bloom: Bloom's taxonomy verb (Remember, Understand, Apply, Analyze, Evaluate)
         difficulty: Difficulty level (1-5)
         last_misconception: String describing misconception, or None
         asked_question_ids: Set of question IDs already asked
@@ -100,13 +100,24 @@ def select_question(bloom: int, difficulty: int, last_misconception: Optional[st
     if bloom_matches:
         return random.choice(bloom_matches)
     
-    # Priority 4: Adjacent bloom level (±1), same difficulty
-    adjacent_bloom_matches = [
-        q for q in available_questions
-        if abs(q.get("bloom", 0) - bloom) <= 1 and q.get("difficulty") == difficulty
-    ]
-    if adjacent_bloom_matches:
-        return random.choice(adjacent_bloom_matches)
+    # Priority 4: Adjacent bloom level, same difficulty
+    bloom_order = ["Remember", "Understand", "Apply", "Analyze", "Evaluate"]
+    try:
+        current_idx = bloom_order.index(bloom)
+        adjacent_blooms = []
+        if current_idx > 0:
+            adjacent_blooms.append(bloom_order[current_idx - 1])
+        if current_idx < len(bloom_order) - 1:
+            adjacent_blooms.append(bloom_order[current_idx + 1])
+        
+        adjacent_bloom_matches = [
+            q for q in available_questions
+            if q.get("bloom") in adjacent_blooms and q.get("difficulty") == difficulty
+        ]
+        if adjacent_bloom_matches:
+            return random.choice(adjacent_bloom_matches)
+    except (ValueError, IndexError):
+        pass
     
     # Priority 5: Same difficulty, any bloom level
     diff_matches = [q for q in available_questions if q.get("difficulty") == difficulty]
@@ -161,6 +172,9 @@ def next_question(session: SessionState) -> Optional[Dict]:
         if q.get("id"):
             session.asked_question_ids.add(q["id"])
         
+        # Add question number to the question object
+        q["number"] = session.question_number
+        
         session.current_question = q
         return q
         
@@ -198,12 +212,17 @@ def score_response(session: SessionState, resp: Dict) -> Dict:
         # Extract final score for adaptive logic
         final_score = evaluation.get("final_score", 0)
         
+        # Bloom progression order
+        bloom_order = ["Remember", "Understand", "Apply", "Analyze", "Evaluate"]
+        current_bloom_idx = bloom_order.index(session.bloom_level) if session.bloom_level in bloom_order else 0
+        
         # Adaptive difficulty and Bloom level adjustment
         if final_score >= 0.85:
             # Student doing very well - increase both
             session.difficulty = min(5, session.difficulty + 1)
-            session.bloom_level = min(5, session.bloom_level + 1)
-            print(f"Performance excellent ({final_score:.2f}). Increasing to Bloom {session.bloom_level}, Difficulty {session.difficulty}")
+            if current_bloom_idx < len(bloom_order) - 1:
+                session.bloom_level = bloom_order[current_bloom_idx + 1]
+            print(f"Performance excellent ({final_score:.2f}). Increasing to Bloom '{session.bloom_level}', Difficulty {session.difficulty}")
             
         elif final_score >= 0.70:
             # Student doing well - increase difficulty only
@@ -216,12 +235,12 @@ def score_response(session: SessionState, resp: Dict) -> Dict:
             print(f"Performance struggling ({final_score:.2f}). Decreasing difficulty to {session.difficulty}")
             
             # For very low scores, also decrease Bloom level
-            if final_score < 0.30:
-                session.bloom_level = max(1, session.bloom_level - 1)
-                print(f"Performance very low ({final_score:.2f}). Decreasing to Bloom {session.bloom_level}")
+            if final_score < 0.30 and current_bloom_idx > 0:
+                session.bloom_level = bloom_order[current_bloom_idx - 1]
+                print(f"Performance very low ({final_score:.2f}). Decreasing to Bloom '{session.bloom_level}'")
         else:
             # Score between 0.50-0.70: maintain current level
-            print(f"Performance adequate ({final_score:.2f}). Maintaining Bloom {session.bloom_level}, Difficulty {session.difficulty}")
+            print(f"Performance adequate ({final_score:.2f}). Maintaining Bloom '{session.bloom_level}', Difficulty {session.difficulty}")
         
         # Update misconception tracking
         misconceptions = evaluation.get("misconceptions", [])

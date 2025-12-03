@@ -56,11 +56,13 @@ async function submitAnswer() {
         });
 
         if (!response.ok) {
-            const errorData = await response.json();
+            const errorData = await response.json().catch(() => ({ detail: "Unknown error" }));
+            console.error("API Error:", errorData);
             throw new Error(errorData.detail || `HTTP error! status: ${response.status}`);
         }
 
         const data = await response.json();
+        console.log("Response data:", data);
 
         // Show evaluation feedback
         showFeedback(data.evaluation);
@@ -75,7 +77,8 @@ async function submitAnswer() {
         }
 
     } catch (error) {
-        showError("Failed to submit answer. Please try again.", error);
+        console.error("Submit error:", error);
+        showError(`Failed to submit answer: ${error.message}`, error);
     }
 }
 
@@ -90,8 +93,9 @@ function showQuestion(question) {
     app.innerHTML = `
         <div class="question-container">
             <div class="question-header">
+                <span class="question-number">Question ${question.number || '?'} of 10</span>
                 <span class="difficulty">Difficulty: ${question.difficulty || 'N/A'}</span>
-                <span class="bloom">Bloom Level: ${question.bloom || 'N/A'}</span>
+                <span class="bloom">Bloom: ${question.bloom || 'N/A'}</span>
             </div>
             <h2 class="question">${escapeHtml(question.question)}</h2>
             
@@ -173,7 +177,7 @@ function showSummary(summary) {
 
     app.innerHTML = `
         <div class="summary-container">
-            <h2>Assessment Complete!</h2>
+            <h2>🎉 Assessment Complete!</h2>
             
             <div class="final-score ${scoreClass}">
                 <div class="score-label">Final Score</div>
@@ -191,7 +195,7 @@ function showSummary(summary) {
                 </div>
                 <div class="stat">
                     <span class="stat-label">Questions Answered:</span>
-                    <span class="stat-value">${summary.responses.length}</span>
+                    <span class="stat-value">${summary.responses.length} of 10</span>
                 </div>
             </div>
             

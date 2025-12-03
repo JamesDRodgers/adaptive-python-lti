@@ -6,9 +6,9 @@ class SessionState:
 
     def reset(self):
         """Reset session to initial state."""
-        self.bloom_level = 1
+        self.bloom_level = "Remember"
         self.difficulty = 1
-        self.max_questions = 15
+        self.max_questions = 10
         self.question_number = 1
         self.current_question = None
         self.finished = False
