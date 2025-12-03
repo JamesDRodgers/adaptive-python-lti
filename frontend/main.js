@@ -1,4 +1,4 @@
-const API = "http://localhost:8000";
+const API = "https://adaptive-python-lti.onrender.com";
 let sessionId = null;
 
 // Start assessment on page load
@@ -6,11 +6,11 @@ async function start() {
     try {
         showLoading("Starting assessment...");
         const response = await fetch(`${API}/start`);
-        
+
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
-        
+
         const data = await response.json();
         sessionId = data.session_id;
         showQuestion(data.question);
@@ -23,26 +23,26 @@ async function start() {
 async function submitAnswer() {
     const answerInput = document.getElementById("answer");
     const explanationInput = document.getElementById("explanation");
-    
+
     const answer = answerInput.value.trim();
     const explanation = explanationInput.value.trim();
-    
+
     // Validate inputs
     if (!answer) {
         alert("Please provide an answer");
         answerInput.focus();
         return;
     }
-    
+
     if (!explanation) {
         alert("Please provide an explanation");
         explanationInput.focus();
         return;
     }
-    
+
     try {
         showLoading("Evaluating your response...");
-        
+
         const response = await fetch(`${API}/answer`, {
             method: "POST",
             headers: {
@@ -54,26 +54,26 @@ async function submitAnswer() {
                 session_id: sessionId
             })
         });
-        
+
         if (!response.ok) {
             const errorData = await response.json();
             throw new Error(errorData.detail || `HTTP error! status: ${response.status}`);
         }
-        
+
         const data = await response.json();
-        
+
         // Show evaluation feedback
         showFeedback(data.evaluation);
-        
+
         // Wait a moment for user to read feedback
         await new Promise(resolve => setTimeout(resolve, 2000));
-        
+
         if (data.finished) {
             showSummary(data.summary);
         } else {
             showQuestion(data.next_question);
         }
-        
+
     } catch (error) {
         showError("Failed to submit answer. Please try again.", error);
     }
@@ -85,7 +85,7 @@ function showQuestion(question) {
         showError("No question available");
         return;
     }
-    
+
     const app = document.getElementById("app");
     app.innerHTML = `
         <div class="question-container">
@@ -116,7 +116,7 @@ function showQuestion(question) {
             <button onclick="submitAnswer()" class="submit-btn">Submit Answer</button>
         </div>
     `;
-    
+
     // Focus on first input
     document.getElementById("answer").focus();
 }
@@ -124,10 +124,10 @@ function showQuestion(question) {
 // Show evaluation feedback
 function showFeedback(evaluation) {
     const app = document.getElementById("app");
-    
-    const scoreClass = evaluation.final_score >= 0.7 ? 'good' : 
-                       evaluation.final_score >= 0.5 ? 'okay' : 'poor';
-    
+
+    const scoreClass = evaluation.final_score >= 0.7 ? 'good' :
+        evaluation.final_score >= 0.5 ? 'okay' : 'poor';
+
     let misconceptionsHtml = '';
     if (evaluation.misconceptions && evaluation.misconceptions.length > 0) {
         misconceptionsHtml = `
@@ -139,7 +139,7 @@ function showFeedback(evaluation) {
             </div>
         `;
     }
-    
+
     app.innerHTML = `
         <div class="feedback-container">
             <h2>Response Evaluated</h2>
@@ -166,11 +166,11 @@ function showFeedback(evaluation) {
 // Show final summary
 function showSummary(summary) {
     const app = document.getElementById("app");
-    
+
     const finalScorePercent = (summary.final_score * 100).toFixed(1);
-    const scoreClass = summary.final_score >= 0.7 ? 'good' : 
-                       summary.final_score >= 0.5 ? 'okay' : 'poor';
-    
+    const scoreClass = summary.final_score >= 0.7 ? 'good' :
+        summary.final_score >= 0.5 ? 'okay' : 'poor';
+
     app.innerHTML = `
         <div class="summary-container">
             <h2>Assessment Complete!</h2>
@@ -214,11 +214,11 @@ function showLoading(message) {
 // Show error message
 function showError(message, error = null) {
     const app = document.getElementById("app");
-    
+
     if (error) {
         console.error("Error:", error);
     }
-    
+
     app.innerHTML = `
         <div class="error">
             <h2>Error</h2>

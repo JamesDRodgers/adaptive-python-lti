@@ -51,7 +51,7 @@ adaptive-python-lti/
 cd adaptive-python-lti
 
 # Add your GitHub remote
-git remote add origin https://github.com/JamesDRodgers/adaptive-python-lti.git
+git remote add origin https://github.com/YOUR-USERNAME/adaptive-python-lti.git
 
 # Push
 git push -u origin main
