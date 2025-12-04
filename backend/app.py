@@ -226,14 +226,18 @@ def answer(request: AnswerRequest):
         if not session:
             raise HTTPException(404, "Session not found")
 
+        # Score the current response
         evaluation = score_response(session, {
             "student_answer": request.student_answer,
             "explanation": request.explanation,
         })
 
-        if session.finished:
+        # CHECK IF FINISHED AFTER SCORING (question_number is now incremented)
+        if session.question_number > session.max_questions:
+            session.finished = True
             summary = session.summary()
 
+            # Submit grade if LTI session
             lti_claims = get_lti_session(request.session_id)
             if lti_claims:
                 summary["grade_submitted"] = lti_grade_submitter.submit_grade(
@@ -243,6 +247,7 @@ def answer(request: AnswerRequest):
                     comment=f"Accuracy: {summary['average_accuracy']:.1%}, Explanation: {summary['average_explanation']:.1%}"
                 )
 
+            # Clean up session
             del SESSIONS[request.session_id]
 
             return {
@@ -251,7 +256,9 @@ def answer(request: AnswerRequest):
                 "summary": summary,
             }
 
+        # Not finished - get next question
         next_q = next_question(session)
+        
         return {
             "evaluation": evaluation,
             "finished": False,
@@ -259,6 +266,7 @@ def answer(request: AnswerRequest):
         }
 
     except Exception as e:
+        print(f"Error processing answer: {e}")
         raise HTTPException(500, f"Error processing answer: {e}")
 
 
