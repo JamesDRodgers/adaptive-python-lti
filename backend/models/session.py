@@ -24,6 +24,10 @@ class SessionState:
         # AI adaptation tracking
         self.ai_decisions = []  # Track AI's rationale for each question
         
+        # Memory: Track asked questions to prevent duplicates
+        self.asked_questions = []  # Store full question text
+        self.asked_topics = set()  # Store topic areas covered
+        
         # Legacy fields (kept for compatibility, but AI now decides these)
         self.last_misconception = None
         self.asked_question_ids = set()
@@ -31,6 +35,19 @@ class SessionState:
     def record_evaluation(self, evaluation):
         """Record an evaluation result with question context in history."""
         self.history.append(evaluation)
+        
+        # Store asked question in memory to prevent duplicates
+        if isinstance(evaluation.get('question'), dict):
+            question = evaluation['question']
+            question_text = question.get('question', '')
+            if question_text:
+                self.asked_questions.append(question_text)
+            
+            # Track topics/concepts covered
+            if 'targets' in question:
+                self.asked_topics.update(question['targets'])
+            if 'focus_areas' in question:
+                self.asked_topics.update(question['focus_areas'])
         
         # Track AI's decision rationale if present
         if isinstance(evaluation.get('question'), dict):

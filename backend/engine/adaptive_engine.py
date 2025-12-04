@@ -66,7 +66,19 @@ def generate_adaptive_question(session: SessionState) -> Optional[Dict]:
     """
     try:
         # Build context from session history
-        history_context = build_history_summary(session.history)
+        history_context = build_history_summary(session.history, session)
+        
+        # Get already-asked questions from session memory
+        asked_questions_text = ""
+        if session.asked_questions:
+            asked_questions_text = "\n\nQUESTIONS ALREADY ASKED (NEVER REPEAT THESE):\n" + "\n".join(
+                f"{i+1}. {q}" for i, q in enumerate(session.asked_questions)
+            )
+        
+        # Get covered topics
+        covered_topics_text = ""
+        if session.asked_topics:
+            covered_topics_text = f"\n\nTOPICS ALREADY COVERED: {', '.join(session.asked_topics)}"
         
         prompt = f"""You are an adaptive Python assessment AI. Analyze the student's complete learning trajectory and autonomously generate the optimal next question.
 
@@ -74,6 +86,13 @@ ASSESSMENT PROGRESS: Question {session.question_number} of {session.max_question
 
 STUDENT PERFORMANCE HISTORY:
 {history_context}
+{asked_questions_text}
+{covered_topics_text}
+
+CRITICAL REQUIREMENTS:
+1. Generate a COMPLETELY NEW question - do NOT repeat or rephrase any question already asked
+2. Explore NEW topics and concepts - avoid redundancy
+3. Build on previous questions but don't duplicate them
 
 YOUR AUTONOMOUS DECISION-MAKING:
 
@@ -168,7 +187,7 @@ Return ONLY valid JSON:
         return fallback_question(session.question_number, session.bloom_level, session.difficulty)
 
 
-def build_history_summary(history: List[Dict]) -> str:
+def build_history_summary(history: List[Dict], session: SessionState = None) -> str:
     """Build formatted summary of student's performance history."""
     if not history:
         return """No previous questions yet. This is the first question.
